@@ -1,6 +1,11 @@
 import 'dart:async';
 
 import 'package:bloc/bloc.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:grocery/data/CartItems.dart';
+import 'package:grocery/data/GroceryData.dart';
+import 'package:grocery/data/WishlistItems.dart';
+import 'package:grocery/features/home/model/ProductDetailsModel.dart';
 import 'package:meta/meta.dart';
 
 part 'home_event.dart';
@@ -9,25 +14,41 @@ part 'home_state.dart';
 class HomeBloc extends Bloc<HomeEvent, HomeState> {
   HomeBloc() : super(HomeInitial()) {
     on<HomeEvent>((event, emit) {});
-    on<HomeCardButtonNavigateEvent>((event, emit) => homeProductWishlistButtonNavigateEvent);
-    on<HomeWishlistButtonNavigateEvent>((event, emit) => homeProductCartButtonNavigateEvent);
-    on<HomeProductWishlistButtonClickedEvent>((event, emit) => homeProductWishlistButtonClickedEvent);
-    on<HomeProductCartButtonClickedEvent>((event, emit) => homeProductCartButtonClickedEvent);
+    on<HomeInitialEvent>(homeInitialEvent);
+    on<HomeProductWishlistButtonClickedEvent>(homeProductWishlistButtonClickedEvent);
+    on<HomeProductCartButtonClickedEvent>( homeProductCartButtonClickedEvent);
+    on<HomeCardButtonNavigateEvent>(homeProductWishlistButtonNavigateEvent);
+    on<HomeWishlistButtonNavigateEvent>(homeProductCartButtonNavigateEvent);
   }
 
-  FutureOr<void> homeProductWishlistButtonNavigateEvent(HomeNavigateToWishlistPageActionState event, Emitter<HomeNavigateToWishlistPageActionState> emit){
-    print("Wishlist Button Navigate");
+  Future<FutureOr<void>> homeInitialEvent(HomeInitialEvent event, Emitter<HomeState> emit) async {
+    emit(HomeLoadingState());
+    await Future.delayed(const Duration(seconds: 3));
+    emit(HomeLoadedSuccessState(
+      products: GroceryData.groceryProducts.map((product) => ProductDetailsModel.fromJson(product)).toList(),
+    ));
   }
 
-  FutureOr<void> homeProductWishlistButtonClickedEvent(HomeNavigateToWishlistPageActionState event, Emitter<HomeNavigateToWishlistPageActionState> emit){
-    print("Wishlist Button clicked");
-}
-
-  FutureOr<void> homeProductCartButtonNavigateEvent(HomeNavigateToCartPageActionState event, Emitter<HomeNavigateToCartPageActionState> emit){
-    print("Cart Button Navigate");
+  FutureOr<void> homeProductWishlistButtonClickedEvent(HomeProductWishlistButtonClickedEvent event, Emitter<HomeState> emit) {
+    debugPrint("Wishlist Button clicked");
+    wishlistItems.add(event.productDetailsModel);
+    emit(HomeAddProductToWishlistPageActionState());
   }
 
-FutureOr<void> homeProductCartButtonClickedEvent(HomeNavigateToCartPageActionState event, Emitter<HomeNavigateToCartPageActionState> emit){
-print("Cart Button clicked");
-}
+  FutureOr<void> homeProductCartButtonClickedEvent(HomeProductCartButtonClickedEvent event, Emitter<HomeState> emit) {
+    debugPrint("Cart Button clicked");
+    cartItems.add(event.productDetailsModel);
+    emit(HomeAddProductToCartPageActionState());
+  }
+
+  FutureOr<void> homeProductWishlistButtonNavigateEvent(HomeCardButtonNavigateEvent event, Emitter<HomeState> emit) {
+        debugPrint("Wishlist Button Navigate");
+        emit(HomeNavigateToWishlistPageActionState());
+  }
+
+  FutureOr<void> homeProductCartButtonNavigateEvent(HomeWishlistButtonNavigateEvent event, Emitter<HomeState> emit) {
+    debugPrint("Cart Button Navigate");
+    emit(HomeNavigateToCartPageActionState());
+  }
+
 }
